@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        table {
+            border-color: rgb(179, 179, 184);
+        }
+
+        th {
+            color: orange;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: left;
+            background-color: #FFFACD;
+
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 篩選區域 -->
+    <label for="teamFilter">主/客隊:</label>
+    <input type="text" class="team-filter" required placeholder="輸入隊名關鍵字">
+    <!-- <button class="filter-button-team">查詢隊名</button> -->
+
+    <label for="oddsFilter">賠率:</label>
+    <input type="number" class="odds-filter" required placeholder="輸入賠率" step="0.01">
+    <button class="filter-button">查詢</button>
+
+
+    <table border="1" cellpadding="10" cellspacing="0" class="matchesTable">
+        <thead>
+
+            <tr>
+                <th>編號ID</th>
+                <th>編號</th>
+                <th>賽事</th>
+                <th>時間</th>
+                <th>客隊</th>
+                <th>主隊</th>
+                <th>負</th>
+                <th>勝</th>
+                <th>來源</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 數據由 jQuery 自動填充 -->
+        </tbody>
+    </table>
+    <tr>
+        <input type="text" class="game-id" required placeholder="輸入ID">
+        <input type="text" class="game-number" required placeholder="輸入編號">
+        <input type="text" class="game-event" required placeholder="輸入賽事">
+        <input type="text" class="game-time" required placeholder="輸入時間">
+        <input type="text" class="game-away" required placeholder="輸入客隊">
+        <input type="text" class="game-home" required placeholder="輸入主隊">
+        <input type="text" class="game-negative" required placeholder="輸入負">
+        <input type="text" class="game-winning" required placeholder="輸入勝">
+        <input type="text" class="game-sources" required placeholder="輸入來源">
+    </tr>
+    <br>
+    <button class="insert_game">新增</button>
+
+    <script>
+        $(document).ready(function () {
+            loadMatches(); // 頁面加載時顯示所有數據
+            // 當隊名篩選按鈕被點擊時觸發篩選操作
+            $('.filter-button').click(function () {
+                var minOdds = parseFloat($('.odds-filter').val().trim());
+                var teamkeyword = $('.team-filter').val().trim();
+
+                if (isNaN(minOdds)) {
+                    minOdds = 0;
+                }
+                loadMatches(minOdds, teamkeyword);
+            });
+
+            $('.insert_game').click(function () {
+                var id = document.querySelector('.game-id').value;
+                var number = document.querySelector('.game-number').value;
+                var event = document.querySelector('.game-event').value;
+                var time = document.querySelector('.game-time').value;
+                var away = document.querySelector('.game-away').value;
+                var home = document.querySelector('.game-home').value;
+                var negative = document.querySelector('.game-negative').value;
+                var winning = document.querySelector('.game-winning').value;
+                var sources = document.querySelector('.game-sources').value;
+
+                console.log(id, number, event, time, away, home, negative, winning, sources);
+                $.ajax({
+                    url: 'sql/insert.php',
+                    type: 'POST',
+                    data: {
+                        eventid: id,
+                        number: number,
+                        event: event,
+                        gametime: time,
+                        away_team: away,
+                        home_team: home,
+                        negative_odds: negative,
+                        winning_odds: winning,
+                        data_sources: sources
+                    },
+                    success: function (response) {
+                        // 解析 JSON 字符串
+                        response = JSON.parse(response);
+
+                        if (response.status === "success") {
+                            alert('資料新增成功！');
+                        } else if (response.status === "error") {
+                            alert('資料新增失敗：' + response.message);
+                        }
+                        console.log(response);
+                    },
+                    error: function (xhr, status, error) {
+                        alert('資料新增失敗：' + error);
+                    }
+                });
+
+
+            });
+            // 當賠率篩選按鈕被點擊時觸發篩選操作
+            // $('.filter-button-odds').click(function () {
+            //     var minOdds = parseFloat($('.odds-filter').val().trim());
+            //     var teamkeyword = $('.team-filter').val().trim();
+
+            //     if (isNaN(minOdds)) {
+            //         minOdds = 0;
+            //     }
+            //     loadMatches(minOdds, teamkeyword);
+            // });
+
+            function loadMatches(minOdds = 0, teamkeyword = "") {
+                console.log(teamkeyword, minOdds)
+                // 發送 AJAX 請求到 json.php
+                $.ajax({
+                    url: 'sql/select.php', // 請求的檔案
+                    type: 'POST',    // 使用 POST 方法
+                    data: {
+                        table: 'new_table',
+                        minOdds: minOdds,
+                        teamkeyword: teamkeyword // 發送的篩選條件
+                    },
+                    dataType: 'json',   // 返回資料類型為 JSON
+                    success: function (data) {
+                        return showui(data);
+                    },
+                });
+            }
+
+            function showui(data) {
+                console.log("Data received:", data);
+                $('.matchesTable tbody').empty();
+
+                // 顯示返回的篩選結果
+                if (Array.isArray(data) && data.length > 0) {
+                    $.each(data, function (index, match) {
+                        $('.matchesTable tbody').append(
+                            '<tr>' +
+                            '<td>' + match.eventid + '</td>' +
+                            '<td>' + match.number + '</td>' +
+                            '<td>' + match.event + '</td>' +
+                            '<td>' + match.gametime + '</td>' +
+                            '<td>' + match.away_team + '</td>' +
+                            '<td>' + match.home_team + '</td>' +
+                            '<td>' + match.negative_odds + '</td>' +
+                            '<td>' + match.winning_odds + '</td>' +
+                            '<td>' + match.data_Sources + '</td>' +
+                            '</tr>'
+                        );
+                    });
+                    // alert(data.length + '筆資料')
+                } else {
+                    alertg("沒有數據");
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
