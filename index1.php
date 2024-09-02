@@ -183,12 +183,12 @@ if ($htmlContent) {
 
                 // 檢查是否已存在該 eventid
                 $eventid = $conn->real_escape_string($details['eventid']);
-                $check_sql = "SELECT eventid FROM new_table WHERE eventid = '$eventid'";
-                $result = $conn->query($check_sql);
+                // $check_sql = "SELECT eventid FROM new_table WHERE eventid = '$eventid'";
+                // $result = $conn->query($check_sql);
 
                 // if ($result->num_rows > 0) {
                 $delete_sql = "DELETE FROM new_table WHERE eventid='$eventid'";
-                $conn->query($delete_sql) === TRUE;
+                $conn->query($delete_sql);  //執行刪除操作
                 // if ($conn->query($delete_sql) === TRUE) {
                 //     echo ("已刪除重複的 eventid: $eventid");
                 // } else {
@@ -220,13 +220,7 @@ if ($htmlContent) {
                 //eventid不存在進行插入，存在則進行更新
 
                 if ($conn->query($sql) === TRUE) {
-                    if ($conn->affected_rows == 1) {
-                        echo "儲存成功";
-                    } elseif ($conn->affected_rows == 2) {
-                        echo "已更新數據";
-                    } else {
-                        echo "未更新數據";
-                    }
+                    echo "儲存成功";
                 } else {
                     echo "錯誤" . $conn->error;
                 }
