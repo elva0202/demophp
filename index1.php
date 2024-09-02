@@ -56,6 +56,7 @@ function parseMatchDetails($tbodyHtml)
 {
     $matchDetailsList = [];
 
+    //正則表達式提取每一行<tr>標籤
     preg_match_all('/<tr\b[^>]*>(.*?)<\/tr>/is', $tbodyHtml, $rows);
 
     foreach ($rows[0] as $row) {
@@ -100,38 +101,41 @@ function parseMatchDetails($tbodyHtml)
         }
 
 
-
+        //提取<tr>標籤中的evenid
         if (isset($cells[0][0])) {
             preg_match('/<tr\b[^>]*\bid=["\']?([0-9a-zA-Z_]+)["\']?/i', $row, $eventidMatch);
         }
 
+        //提取<i>標籤中的number
         if (isset($cells[1][0])) {
             preg_match('/<i\b[^>]*>(.*?)<\/i>/is', $cells[1][0], $numberMatch);
             $matchDetails['number'] = isset($numberMatch[1]) ? cleanData(strip_tags($numberMatch[1])) : 'N/A';
         }
-
+        //提取賽事
         if (isset($cells[1][1])) {
             $matchDetails['event'] = cleanData(strip_tags($cells[1][1]));
         }
-
+        //提取客隊
         if (isset($cells[1][3])) {
             $matchDetails['away_team'] = str_replace(['[', ']'], '', cleanData(strip_tags($cells[1][3])));
         }
-
+        //提取主隊
         if (isset($cells[1][5])) {
             $matchDetails['home_team'] = str_replace(['[', ']'], '', cleanData(strip_tags($cells[1][5])));
         }
-
+        //提取負/勝賠率
         if (isset($cells[1][6])) {
             preg_match_all('/<a\b[^>]*>(.*?)<\/a>/is', $cells[1][6], $bets_areaMatch);
             $matchDetails['negative_odds'] = isset($bets_areaMatch[1][0]) ? cleanData(strip_tags($bets_areaMatch[1][0])) : 'N/A';
             $matchDetails['winning_odds'] = isset($bets_areaMatch[1][1]) ? cleanData(strip_tags($bets_areaMatch[1][1])) : 'N/A';
         }
-
+        //提取來源
         if (isset($cells[1][7])) {
             preg_match('/<a\b[^>]*>(.*?)<\/a>/is', $cells[1][7], $numberMatch);
             $matchDetails['data_Sources'] = isset($numberMatch[1]) ? cleanData(strip_tags($numberMatch[1])) : 'N/A';
         }
+
+
 
         $matchDetailsList[] = $matchDetails;
     }
@@ -140,11 +144,11 @@ function parseMatchDetails($tbodyHtml)
 }
 
 // 目標網頁的 URL
-$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-08-22";
+$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-08-29";
 
 $htmlContent = fetchWebPage($url);
 if ($htmlContent) {
-    require_once 'db1.php';
+    require_once 'sql/db1.php';
 
     $tables = extractTables($htmlContent);
 
@@ -161,33 +165,63 @@ if ($htmlContent) {
     echo '<th>來源</th>';
     echo '</tr>';
 
+    //遍歷 $table數組 ，數組中儲存了網頁中提取的table元素HTML
     foreach ($tables as $index => $tableHtml) {
         $tbodys = extractTbodysFromTable($tableHtml);
-
+        //從表格中提取tbody元素
         foreach ($tbodys as $tbodyHtml) {
             $matchDetailsList = parseMatchDetails($tbodyHtml);
 
             foreach ($matchDetailsList as $details) {
+                //檢查eventid是否為空
+                if (empty($details['eventid'])) {
+                    echo "Skipping entry with empty eventid.";
+                    continue;
+                }
+                //處理gametime如果是NULL設為NULL
                 $gametimeValue = !is_null($details['gametime']) ? "'" . $conn->real_escape_string($details['gametime']) . "'" : "NULL";
 
-                $sql = "INSERT INTO new_table(
-                    eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
-                ) VALUES (
-                    '" . $conn->real_escape_string($details['eventid']) . "',
-                    '" . $conn->real_escape_string($details['number']) . "',
-                    '" . $conn->real_escape_string($details['event']) . "',
-                    $gametimeValue,
-                    '" . $conn->real_escape_string($details['away_team']) . "',
-                    '" . $conn->real_escape_string($details['home_team']) . "',
-                    '" . $conn->real_escape_string($details['negative_odds']) . "',
-                    '" . $conn->real_escape_string($details['winning_odds']) . "',
-                    '" . $conn->real_escape_string($details['data_Sources']) . "'
-                )";
+                // 檢查是否已存在該 eventid
+                $eventid = $conn->real_escape_string($details['eventid']);
+                $check_sql = "SELECT eventid FROM new_table WHERE eventid = '$eventid'";
+                $result = $conn->query($check_sql);
+
+                if ($result->num_rows > 0) {
+                    // 如果已存在，返回重複的訊息
+                    echo ('重複資料');
+                } else {
+                    // 如果不存在，插入新數據
+                    $sql = "INSERT INTO new_table (
+                        eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
+                        )VALUES (
+                            '$eventid', '$number', '$event', '$gametime', '$away_team', '$home_team', '$negative_odds', '$winning_odds', '$data_sources')";
+
+                    // if ($conn->query($sql) === TRUE) {
+                    //     echo json_encode(["status" => "success", "message" => "新紀錄插入成功"]);
+                    $sql = "INSERT INTO new_table(
+                            eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
+                        ) VALUES (
+                            '" . $conn->real_escape_string($details['eventid']) . "',
+                            '" . $conn->real_escape_string($details['number']) . "',
+                            '" . $conn->real_escape_string($details['event']) . "',
+                            $gametimeValue,
+                            '" . $conn->real_escape_string($details['away_team']) . "',
+                            '" . $conn->real_escape_string($details['home_team']) . "',
+                            '" . $conn->real_escape_string($details['negative_odds']) . "',
+                            '" . $conn->real_escape_string($details['winning_odds']) . "',
+                            '" . $conn->real_escape_string($details['data_Sources']) . "'
+                        )";
+
+                    // } else {
+                    //     echo json_encode(["status" => "error", "message" => "插入錯誤: " . $conn->error]);
+                    // }
+
+                }
 
                 if ($conn->query($sql) !== TRUE) {
                     echo "Error: " . $conn->error;
                 } else {
-                    echo "Inserted successfully.";
+                    echo "儲存成功.";
                 }
 
                 echo '<tr>';
