@@ -144,7 +144,7 @@ function parseMatchDetails($tbodyHtml)
 }
 
 // 目標網頁的 URL
-$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-08-29";
+$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-08-30";
 
 $htmlContent = fetchWebPage($url);
 if ($htmlContent) {
@@ -186,19 +186,16 @@ if ($htmlContent) {
                 $check_sql = "SELECT eventid FROM new_table WHERE eventid = '$eventid'";
                 $result = $conn->query($check_sql);
 
-                if ($result->num_rows > 0) {
-                    // 如果已存在，返回重複的訊息
-                    echo ('重複資料');
-                } else {
-                    // 如果不存在，插入新數據
-                    $sql = "INSERT INTO new_table (
-                        eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
-                        )VALUES (
-                            '$eventid', '$number', '$event', '$gametime', '$away_team', '$home_team', '$negative_odds', '$winning_odds', '$data_sources')";
-
-                    // if ($conn->query($sql) === TRUE) {
-                    //     echo json_encode(["status" => "success", "message" => "新紀錄插入成功"]);
-                    $sql = "INSERT INTO new_table(
+                // if ($result->num_rows > 0) {
+                $delete_sql = "DELETE FROM new_table WHERE eventid='$eventid'";
+                $conn->query($delete_sql) === TRUE;
+                // if ($conn->query($delete_sql) === TRUE) {
+                //     echo ("已刪除重複的 eventid: $eventid");
+                // } else {
+                //     echo "刪除錯誤" . $conn->error;
+                // }
+                // } else {
+                $sql = "INSERT INTO new_table(
                             eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
                         ) VALUES (
                             '" . $conn->real_escape_string($details['eventid']) . "',
@@ -210,20 +207,29 @@ if ($htmlContent) {
                             '" . $conn->real_escape_string($details['negative_odds']) . "',
                             '" . $conn->real_escape_string($details['winning_odds']) . "',
                             '" . $conn->real_escape_string($details['data_Sources']) . "'
-                        )";
+                        )ON DUPLICATE KEY UPDATE   
+                            eventid = VALUES(eventid),
+                            number = VALUES(number),
+                            event = VALUES(event),
+                            gametime = VALUES(gametime),
+                            away_team = VALUES(away_team),
+                            home_team = VALUES(home_team),
+                            negative_odds = VALUES(negative_odds),
+                            winning_odds = VALUES(winning_odds),
+                            data_Sources = VALUES(data_Sources)";
+                //eventid不存在進行插入，存在則進行更新
 
-                    // } else {
-                    //     echo json_encode(["status" => "error", "message" => "插入錯誤: " . $conn->error]);
-                    // }
-
-                }
-
-                if ($conn->query($sql) !== TRUE) {
-                    echo "Error: " . $conn->error;
+                if ($conn->query($sql) === TRUE) {
+                    if ($conn->affected_rows == 1) {
+                        echo "儲存成功";
+                    } elseif ($conn->affected_rows == 2) {
+                        echo "已更新數據";
+                    } else {
+                        echo "未更新數據";
+                    }
                 } else {
-                    echo "儲存成功.";
+                    echo "錯誤" . $conn->error;
                 }
-
                 echo '<tr>';
                 echo '<td>' . ($details['eventid']) . '</td>';
                 echo '<td>' . ($details['number']) . '</td>';
@@ -235,6 +241,7 @@ if ($htmlContent) {
                 echo '<td>' . ($details['winning_odds']) . '</td>';
                 echo '<td>' . ($details['data_Sources']) . '</td>';
                 echo '</tr>';
+                // }
             }
         }
     }
