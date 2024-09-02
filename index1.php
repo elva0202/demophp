@@ -144,7 +144,7 @@ function parseMatchDetails($tbodyHtml)
 }
 
 // 目標網頁的 URL
-$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-08-30";
+$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-09-01";
 
 $htmlContent = fetchWebPage($url);
 if ($htmlContent) {
@@ -183,18 +183,9 @@ if ($htmlContent) {
 
                 // 檢查是否已存在該 eventid
                 $eventid = $conn->real_escape_string($details['eventid']);
-                // $check_sql = "SELECT eventid FROM new_table WHERE eventid = '$eventid'";
-                // $result = $conn->query($check_sql);
-
-                // if ($result->num_rows > 0) {
                 $delete_sql = "DELETE FROM new_table WHERE eventid='$eventid'";
                 $conn->query($delete_sql);  //執行刪除操作
-                // if ($conn->query($delete_sql) === TRUE) {
-                //     echo ("已刪除重複的 eventid: $eventid");
-                // } else {
-                //     echo "刪除錯誤" . $conn->error;
-                // }
-                // } else {
+
                 $sql = "INSERT INTO new_table(
                             eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
                         ) VALUES (
@@ -235,11 +226,9 @@ if ($htmlContent) {
                 echo '<td>' . ($details['winning_odds']) . '</td>';
                 echo '<td>' . ($details['data_Sources']) . '</td>';
                 echo '</tr>';
-                // }
             }
         }
     }
-
     $conn->close();
 } else {
     echo "無法獲取網頁內容。\n";
