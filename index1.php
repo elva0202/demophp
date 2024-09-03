@@ -198,42 +198,44 @@ if ($htmlContent) {
                 // $delete_sql = "DELETE FROM new_table WHERE eventid='$eventid'";
                 // $conn->query($delete_sql);  //執行刪除操作
             }
-        }
-        if (!empty($sql_values)) {
-            $sql = "INSERT INTO new_table(
-                    eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
-                ) VALUES " . implode(", ", $sql_values) . "
-                ON DUPLICATE KEY UPDATE  
-                    eventid = VALUeS(eventid),
-                    number = VALUES(number),
-                    event = VALUES(event),
-                    gametime = VALUES(gametime),
-                    away_team = VALUES(away_team),
-                    home_team = VALUES(home_team),
-                    negative_odds = VALUES(negative_odds),
-                    winning_odds = VALUES(winning_odds),
-                    data_Sources = VALUES(data_Sources)";
-            var_dump($sql);
-            //eventid不存在進行插入，存在則進行更新
 
-            if ($conn->query($sql) === TRUE) {
-                echo "儲存成功";
-            } else {
-                echo "錯誤" . $conn->error;
+            if (!empty($sql_values)) {
+                $sql = "INSERT INTO new_table(
+                        eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources
+                    ) VALUES " . implode(", ", $sql_values) . "
+                    ON DUPLICATE KEY UPDATE  
+                        eventid = VALUeS(eventid),
+                        number = VALUES(number),
+                        event = VALUES(event),
+                        gametime = VALUES(gametime),
+                        away_team = VALUES(away_team),
+                        home_team = VALUES(home_team),
+                        negative_odds = VALUES(negative_odds),
+                        winning_odds = VALUES(winning_odds),
+                        data_Sources = VALUES(data_Sources)";
+                var_dump($sql);
+                //eventid不存在進行插入，存在則進行更新
+
+                if ($conn->query($sql) === TRUE) {
+                    echo "儲存成功";
+                } else {
+                    echo "錯誤" . $conn->error;
+                }
+                echo '<tr>';
+                echo '<td>' . ($details['eventid']) . '</td>';
+                echo '<td>' . ($details['number']) . '</td>';
+                echo '<td>' . ($details['event']) . '</td>';
+                echo '<td>' . ($details['gametime']) . '</td>';
+                echo '<td>' . ($details['away_team']) . '</td>';
+                echo '<td>' . ($details['home_team']) . '</td>';
+                echo '<td>' . ($details['negative_odds']) . '</td>';
+                echo '<td>' . ($details['winning_odds']) . '</td>';
+                echo '<td>' . ($details['data_Sources']) . '</td>';
+                echo '</tr>';
             }
-            echo '<tr>';
-            echo '<td>' . ($details['eventid']) . '</td>';
-            echo '<td>' . ($details['number']) . '</td>';
-            echo '<td>' . ($details['event']) . '</td>';
-            echo '<td>' . ($details['gametime']) . '</td>';
-            echo '<td>' . ($details['away_team']) . '</td>';
-            echo '<td>' . ($details['home_team']) . '</td>';
-            echo '<td>' . ($details['negative_odds']) . '</td>';
-            echo '<td>' . ($details['winning_odds']) . '</td>';
-            echo '<td>' . ($details['data_Sources']) . '</td>';
-            echo '</tr>';
         }
     }
+
     $conn->close();
 } else {
     echo "無法獲取網頁內容。\n";
