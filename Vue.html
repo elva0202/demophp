@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        table {
+            border-color: blue;
+        }
+
+        th {
+            letter-spacing: 2px;
+            text-align: left;
+            background-color: #fffacd;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+
+        <label for="teamFilter">隊名</label>
+        <input type="text" v-model="teamFilter" required placeholder="輸入隊伍關鍵字">
+
+        <label for="oddsFilter">賠率</label>
+        <input type="number" v-model="oddsFilter" required placeholder="輸入賠率" step="0.01">
+        <button @click="filter-button">查詢</button>
+
+        <table border="1" cellpadding="10" cellspacing="0" class="matchesTable">
+            <thead>
+                <tr>
+                    <th>編號ID</th>
+                    <th>編號</th>
+                    <th>賽事</th>
+                    <th>時間</th>
+                    <th>客隊</th>
+                    <th>主隊</th>
+                    <th>負</th>
+                    <th>勝</th>
+                    <th>來源</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="match in filteredMatches " :key="match.eventid">
+                    <td> {{match.eventid}} </td>
+                    <td> {{match.number}}</td>
+                    <td> {{match.event}}</td>
+                    <td> {{match.gametime}}</td>
+                    <td> {{match.away_team}}</td>
+                    <td> {{match.home_team}}</td>
+                    <td> {{match.negative_odds}}</td>
+                    <td> {{match.winning_odds}}</td>
+                    <td> {{match.data_Sources}}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div>
+            <input v-model="game-id" placeholder="輸入ID">
+            <input v-model="game-number" placeholder="輸入編號">
+            <input v-model="game-event" placeholder="輸入賽事">
+            <input v-model="game-time" placeholder="輸入時間">
+            <input v-model="game-away" placeholder="輸入客隊">
+            <input v-model="game-home" placeholder="輸入主隊">
+            <input v-model="game-negative" placeholder="輸入負">
+            <input v-model="game-winning" placeholder="輸入勝">
+            <input v-model="game-sources" placeholder="輸入來源">
+        </div>
+        <br>
+        <button @click="addGame">新增</button>
+        <script>
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        matches: [],
+                        teamFilter: '',
+                        oddsFilter: '',
+                        newGame: {
+                            evenid: '',
+                            number: '',
+                            event: '',
+                            gametime: '',
+                            away_team: '',
+                            home_team: '',
+                            negative: '',
+                            winning_odds: '',
+                            data_Sources: '',
+                        }
+                    };
+                },
+                computed: {
+                    filteredMatches() {
+                        return this.matches.filter(match => {
+                            const teamMatches = match.away_team.includes(this.teamFilter) || match.home_teamf.includes(this.teamFilter);
+                            const oddsMatches = parseFloat(match.negative_odds) >= this.oddsFilter || parseFloat(match.winning_odds) >= this.oddsFilter;
+                            return teamMatches && oddsMatches;
+                        });
+                    }
+                },
+                methods: {
+                    async loadMatches() {
+                        try {
+                            const response = await fetch('sql/insert.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    table: 'new_table',
+                                })
+                            });
+                            this.matches = await response.json();
+                        } catch (error) {
+                            console.log("error");
+                        }
+                    },
+                    async addGame() {
+                        try {
+                            const response = await fetch('sql/insert.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(
+                                    this.newGame
+                                )
+                            });
+                            const result = await response.json();
+
+                            if (result.status === "success") {
+                                alert('資料新增成功！');
+                            } else if (result.status === "error") {
+                                alert('資料新增失敗:' + response.message);
+                            }
+                        } catch (error) {
+                            console.log("error");
+                        }
+                    },
+                },
+            });
+            app.mount('#app');
+        </script>
+</body>
+
+</html>
