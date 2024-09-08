@@ -7,7 +7,7 @@ $teamkeyword = isset($_POST['teamkeyword']) ? $_POST['teamkeyword'] : "";
 $table = isset($_POST['table']) ? $_POST['table'] : "";
 
 // 構建 SQL 查詢語句
-$sql = "SELECT eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_Sources FROM `$table` WHERE 1=1";
+$sql = "SELECT id,eventid, number, event, gametime, away_team, home_team, negative_odds, winning_odds, data_sources FROM `$table` WHERE 1=1";
 
 // 根据筛选条件追加 SQL 语句
 $bindTypes = "";

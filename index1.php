@@ -144,7 +144,7 @@ function parseMatchDetails($tbodyHtml)
 }
 
 // 目標網頁的 URL
-$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-09-01";
+$url = "https://cp.zgzcw.com/lottery/jcplayvsForJsp.action?lotteryId=26&issue=2024-09-05";
 
 $htmlContent = fetchWebPage($url);
 if ($htmlContent) {
