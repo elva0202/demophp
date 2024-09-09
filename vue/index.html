@@ -27,22 +27,21 @@
 <body>
     <!-- 添加 #app 元素，讓 Vue 能正確掛載 -->
     <div id="app">
-
+        <!-- 篩選條件表單 -->
         <label>主/客隊:</label>
         <input type="text" v-model="teamfilter" required placeholder="輸入隊名關鍵字">
-        <!-- <button class="filter-button-team">查詢隊名</button> -->
 
         <label>賠率:</label>
         <input type="number" v-model="oddsfilter" required placeholder="輸入賠率" step="0.01">
         <button @click="filterbutton">查詢</button>
         <br>
-        <label>賠率閥值</label>
+        <label>閥值</label>
         <input type="number" v-model="threshold" required placeholder="輸入閥值" step="0.01">
         <br>
         <button @click="buttonOneClick">按鈕 API</button>
         <button @click="loadMatches">按鈕 ajax</button>
 
-        <table v-if="matches.length > 0" border="1" cellpadding="10" cellspacing="0">
+        <table v-if="filteredMatches.length > 0" border="1" cellpadding="10" cellspacing="0">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -58,7 +57,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="match in matches" :key="match.id">
+                <tr v-for="match in filteredMatches" :key="match.id">
                     <td>{{ match.id }}</td>
                     <td>{{ match.eventid }}</td>
                     <td>{{ match.number }}</td>
@@ -67,18 +66,18 @@
                     <td>{{ match.away_team }}</td>
                     <td>{{ match.home_team }}</td>
                     <td
-                        :class="{highlight :(threshold !== null && threshold!== '') && (match.negative_odds >= threshold)}">
+                        :class="{highlight :(threshold !== null && threshold!== '' && match.negative_odds >= threshold)}">
                         {{
                         match.negative_odds }}</td>
                     <td
-                        :class="{highlight :(threshold !== null && threshold!== '') && (match.winning_odds >= threshold)}">
+                        :class="{highlight :(threshold !== null && threshold!== '' && match.winning_odds >= threshold)}">
                         {{ match.winning_odds }}</td>
                     <td>{{ match.data_sources }}</td>
                 </tr>
             </tbody>
         </table>
 
-        <p v-if="matches.length === 0 && dataLoaded">沒有可顯示的比賽數據。</p>
+        <p v-if="filteredMatches.length === 0 && dataLoaded">沒有可顯示的比賽數據。</p>
     </div>
 
     <script>
@@ -88,9 +87,22 @@
                     matches: [],        //存放比賽數據
                     teamfilter: '',     //隊名篩選
                     oddsfilter: '',     //賠率篩選
-                    threshold: 2,       //閥值 Infinity
-                    dataLoaded: false    //初始化 dataLoaded為false
+                    threshold: '',       //閥值 
+                    dataLoaded: true    //判斷是否加載
                 };
+            },
+            computed: {// 根據 threshold 和其他條件進行篩選
+                filteredMatches() {
+                    // 如果沒有輸入 threshold，返回所有數據
+                    if (!this.threshold) {
+                        return this.matches;
+                    } else {
+                        // 根據 threshold 和賠率過濾數據
+                        return this.matches.filter(match => {
+                            return match.negative_odds >= this.threshold || match.winning_odds >= this.threshold;
+                        })
+                    };
+                }
             },
             methods: {
                 filterbutton() {
@@ -144,6 +156,9 @@
                         console.error('請求失敗:', error);
                     }
                 }
+            },
+            mounted() {
+                this.loadMatches(0, '', 0);
             }
         });
 
