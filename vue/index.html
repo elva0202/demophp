@@ -35,7 +35,10 @@
         <label>賠率:</label>
         <input type="number" v-model="oddsfilter" required placeholder="輸入賠率" step="0.01">
         <button @click="filterbutton">查詢</button>
-
+        <br>
+        <label>賠率閥值</label>
+        <input type="number" v-model="threshold" required placeholder="輸入閥值" step="0.01">
+        <br>
         <button @click="buttonOneClick">按鈕 API</button>
         <button @click="loadMatches">按鈕 ajax</button>
 
@@ -63,8 +66,13 @@
                     <td>{{ match.gametime }}</td>
                     <td>{{ match.away_team }}</td>
                     <td>{{ match.home_team }}</td>
-                    <td :class="{highlight :match.negative_odds>=2}">{{ match.negative_odds }}</td>
-                    <td :class="{highlight :match.winning_odds>=2}">{{ match.winning_odds }}</td>
+                    <td
+                        :class="{highlight :(threshold !== null && threshold!== '') && (match.negative_odds >= threshold)}">
+                        {{
+                        match.negative_odds }}</td>
+                    <td
+                        :class="{highlight :(threshold !== null && threshold!== '') && (match.winning_odds >= threshold)}">
+                        {{ match.winning_odds }}</td>
                     <td>{{ match.data_sources }}</td>
                 </tr>
             </tbody>
@@ -79,7 +87,8 @@
                 return {
                     matches: [],        //存放比賽數據
                     teamfilter: '',     //隊名篩選
-                    oddsfilter: '',      //賠率篩選
+                    oddsfilter: '',     //賠率篩選
+                    threshold: 2,       //閥值 Infinity
                     dataLoaded: false    //初始化 dataLoaded為false
                 };
             },
@@ -87,15 +96,18 @@
                 filterbutton() {
                     var minOdds = this.oddsfilter
                     var teamkeyword = this.teamfilter
-
+                    var minimumthreshold = this.threshold
                     if (isNaN(minOdds)) {
                         minOdds = 0;
                     }
-                    this.loadMatches(minOdds, teamkeyword);
+                    if (isNaN(minimumthreshold)) {
+                        minimumthreshold = 0;
+                    }
+                    this.loadMatches(minOdds, teamkeyword, minimumthreshold);
                 },
                 async buttonOneClick() {
                     try {
-                        const response = await fetch('http://127.0.0.1:8080/demophp/api/fechlist.php');
+                        const response = await fetch('../api/fechlist.php');
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
@@ -106,7 +118,7 @@
                         console.error('API 請求失敗:', error);
                     }
                 },
-                loadMatches(minOdds, teamkeyword) {
+                loadMatches(minOdds, teamkeyword, minimumthreshold) {
                     try {
                         $.ajax({
                             url: '../sql/select.php',
@@ -114,7 +126,8 @@
                             data: {
                                 table: 'new_table',
                                 minOdds: minOdds,
-                                teamkeyword: teamkeyword
+                                teamkeyword: teamkeyword,
+                                minimumthreshold: minimumthreshold
                             },
                             success: (data) => {
                                 if (Array.isArray(data)) {

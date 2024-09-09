@@ -15,11 +15,7 @@
             letter-spacing: 2px;
             text-align: left;
             background-color: #FFFACD;
-        }
 
-        .highlight {
-            background-color: #e99db4;
-            color: red
         }
     </style>
 </head>
@@ -170,8 +166,8 @@
                             '<td>' + match.gametime + '</td>' +
                             '<td>' + match.away_team + '</td>' +
                             '<td>' + match.home_team + '</td>' +
-                            '<td class="' + (match.negative_odds >= 2 ? 'highlight' : '') + '">' + match.negative_odds + '</td>' +
-                            '<td class="' + (match.winning_odds >= 2 ? 'highlight' : '') + '">' + match.winning_odds + '</td>' +
+                            '<td>' + match.negative_odds + '</td>' +
+                            '<td>' + match.winning_odds + '</td>' +
                             '<td>' + match.data_Sources + '</td>' +
                             '</tr>'
                         );
