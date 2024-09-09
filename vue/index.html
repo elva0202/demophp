@@ -16,6 +16,11 @@
             text-align: left;
             background-color: #fffacd;
         }
+
+        .highlight {
+            background-color: #e99db4;
+            color: red
+        }
     </style>
 </head>
 
@@ -39,14 +44,14 @@
                 <tr>
                     <th>ID</th>
                     <th>比賽ID</th>
-                    <th>賽事編號</th>
-                    <th>比賽</th>
+                    <th>編號</th>
+                    <th>賽事</th>
                     <th>開始時間</th>
                     <th>客隊</th>
                     <th>主隊</th>
                     <th>負賠率</th>
                     <th>贏賠率</th>
-                    <th>數據來源</th>
+                    <th>來源</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,8 +63,8 @@
                     <td>{{ match.gametime }}</td>
                     <td>{{ match.away_team }}</td>
                     <td>{{ match.home_team }}</td>
-                    <td>{{ match.negative_odds }}</td>
-                    <td>{{ match.winning_odds }}</td>
+                    <td :class="{highlight :match.negative_odds>=2}">{{ match.negative_odds }}</td>
+                    <td :class="{highlight :match.winning_odds>=2}">{{ match.winning_odds }}</td>
                     <td>{{ match.data_sources }}</td>
                 </tr>
             </tbody>
@@ -72,10 +77,10 @@
         const app = Vue.createApp({
             data() {
                 return {
-                    matches: [],
-                    teamfilter: '',
-                    oddsfilter: 0,
-
+                    matches: [],        //存放比賽數據
+                    teamfilter: '',     //隊名篩選
+                    oddsfilter: '',      //賠率篩選
+                    dataLoaded: false    //初始化 dataLoaded為false
                 };
             },
             methods: {
@@ -96,6 +101,7 @@
                         }
                         const data = await response.json();
                         this.matches = data;
+                        this.dataLoaded = true;
                     } catch (error) {
                         console.error('API 請求失敗:', error);
                     }
