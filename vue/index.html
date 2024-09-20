@@ -3,9 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
     <style>
         table {
             border-color: blue;
@@ -28,7 +27,7 @@
     <!-- 添加 #app 元素，讓 Vue 能正確掛載 -->
     <div id="app">
         <!-- 篩選條件表單 -->
-        <label>主/客隊:</label>
+        <label>隊伍:</label>
         <input type="text" v-model="teamfilter" required placeholder="輸入隊名關鍵字">
 
         <label>賠率:</label>
@@ -125,7 +124,6 @@
                         }
                         const data = await response.json();
                         this.matches = data;
-                        this.dataLoaded = true;
                     } catch (error) {
                         console.error('API 請求失敗:', error);
                     }
